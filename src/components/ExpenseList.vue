@@ -19,6 +19,11 @@
                     </div>
                 </template>
 
+                <Column header="No">
+                    <template #body="{ index }">
+                        <span>{{ index + 1 }}</span>
+                    </template>
+                </Column>
                 <Column field="date" header="Ngày" sortable>
                     <template #body="{ data }">
                         <span class="font-medium">{{ formatDate(data.date) }}</span>
@@ -81,7 +86,6 @@
 <script setup>
 import { ref } from 'vue'
 import { useConfirm } from 'primevue/useconfirm'
-// import { FilterMatchMode } from 'primevue/api'
 import Card from 'primevue/card'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
@@ -91,6 +95,7 @@ import InputText from 'primevue/inputtext'
 import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
 import ConfirmDialog from 'primevue/confirmdialog'
+import { formatDate, formatCurrency } from '@/utils/common.js'
 
 const props = defineProps({
     expenses: {
@@ -119,16 +124,5 @@ const confirmDelete = (expense) => {
             emit('delete-expense', expense.id)
         }
     })
-}
-
-const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('vi-VN')
-}
-
-const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency: 'VND'
-    }).format(amount)
 }
 </script>

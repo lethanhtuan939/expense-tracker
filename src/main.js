@@ -1,13 +1,14 @@
 import { createApp } from 'vue'
 import App from './App.vue'
-import './index.css'
 import PrimeVue from 'primevue/config';
 import Aura from '@primeuix/themes/aura'
 import appState from '../plugins/appState'
 import ToastService from 'primevue/toastservice'
 import Tooltip from 'primevue/tooltip'
-import 'primeicons/primeicons.css'
 import ConfirmationService from 'primevue/confirmationservice'
+
+import 'primeicons/primeicons.css'
+import './index.css'
 
 const app = createApp(App)
 

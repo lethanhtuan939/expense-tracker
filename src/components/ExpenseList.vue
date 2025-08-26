@@ -52,6 +52,14 @@
                     </template>
                 </Column>
 
+                <Column field="paymentMethod" header="Hình thức">
+                    <template #body="{ data }">
+                        <span class="px-2 py-1 rounded text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200">
+                            {{ data.paymentMethod || '-' }}
+                        </span>
+                    </template>
+                </Column>
+
                 <Column field="amount" header="Số tiền" sortable>
                     <template #body="{ data }">
                         <span class="font-bold" :class="data.type === 'income' ? 'text-green-600' : 'text-red-600'">

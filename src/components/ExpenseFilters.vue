@@ -48,27 +48,36 @@
                         </MultiSelect>
                     </div>
 
-                    <!-- Type Filter -->
+                    <!-- Payment Method Filter -->
                     <div class="space-y-2">
-                        <label class="text-sm font-medium text-slate-600 dark:text-slate-300">Loại</label>
-                        <div class="flex gap-2">
-                            <Button @click="toggleType('income')" :severity="localFilters.type === 'income' ? 'success' : 'secondary'"
-                                :outlined="localFilters.type !== 'income'" size="small" class="flex-1">
-                                <i class="pi pi-arrow-up mr-1"></i>
-                                Thu nhập
-                            </Button>
-                            <Button @click="toggleType('expense')" :severity="localFilters.type === 'expense' ? 'danger' : 'secondary'"
-                                :outlined="localFilters.type !== 'expense'" size="small" class="flex-1">
-                                <i class="pi pi-arrow-down mr-1"></i>
-                                Chi tiêu
-                            </Button>
-                        </div>
+                        <label class="text-sm font-medium text-slate-600 dark:text-slate-300">Hình thức</label>
+                        <Dropdown :modelValue="localFilters.payment" @update:modelValue="togglePayment"
+                            :options="[{ 'label': 'Chuyển khoản', 'value': 'Chuyển khoản' }, { 'label': 'Tiền mặt', 'value': 'Tiền mặt' }]"
+                            optionLabel="label" optionValue="value" placeholder="Chọn hình thức" class="w-full" />
                     </div>
                 </div>
 
                 <!-- Amount Range Filter -->
                 <div class="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+
+                        <!-- Type Filter -->
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium text-slate-600 dark:text-slate-300">Loại</label>
+                            <div class="flex gap-2">
+                                <Button @click="toggleType('income')" :severity="localFilters.type === 'income' ? 'success' : 'secondary'"
+                                    :outlined="localFilters.type !== 'income'" size="small" class="flex-1">
+                                    <i class="pi pi-arrow-up mr-1"></i>
+                                    Thu nhập
+                                </Button>
+                                <Button @click="toggleType('expense')" :severity="localFilters.type === 'expense' ? 'danger' : 'secondary'"
+                                    :outlined="localFilters.type !== 'expense'" size="small" class="flex-1">
+                                    <i class="pi pi-arrow-down mr-1"></i>
+                                    Chi tiêu
+                                </Button>
+                            </div>
+                        </div>
+
                         <div class="space-y-2">
                             <label class="text-sm font-medium text-slate-600 dark:text-slate-300">Số tiền tối thiểu</label>
                             <InputNumber v-model="localFilters.minAmount" mode="currency" currency="VND" locale="vi-VN" placeholder="0 ₫"
@@ -107,6 +116,11 @@
                             {{ getCategoryLabel(category) }}
                             <i class="pi pi-times ml-1 cursor-pointer" @click="removeCategory(category)"></i>
                         </Tag>
+
+                        <Tag v-if="localFilters.payment" :severity="localFilters.payment === 'cash' ? 'info' : 'warning'" class="text-xs">
+                            Hình thức: {{ localFilters.payment }}
+                            <i class="pi pi-times ml-1 cursor-pointer" @click="localFilters.payment = null"></i>
+                        </Tag>
                     </div>
                     <Button @click="applyFilters" class="flex items-center">
                         <i class="pi pi-check"></i>
@@ -125,6 +139,7 @@ import MultiSelect from 'primevue/multiselect'
 import InputNumber from 'primevue/inputnumber'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
+import Dropdown from 'primevue/dropdown'
 
 // Props
 const props = defineProps({
@@ -148,8 +163,6 @@ const toggleCollapse = () => {
     isCollapsed.value = !isCollapsed.value
 }
 
-// ... existing code ...
-
 // Local Filters
 const localFilters = ref({
     dateFrom: props.modelValue.dateFrom || null,
@@ -157,7 +170,8 @@ const localFilters = ref({
     categories: props.modelValue.categories || [],
     type: props.modelValue.type || null,
     minAmount: props.modelValue.minAmount || null,
-    maxAmount: props.modelValue.maxAmount || null
+    maxAmount: props.modelValue.maxAmount || null,
+    payment: props.modelValue.payment || null
 })
 
 // Sync with v-model
@@ -174,7 +188,8 @@ const hasActiveFilters = computed(() => {
         localFilters.value.categories.length > 0 ||
         localFilters.value.type ||
         localFilters.value.minAmount ||
-        localFilters.value.maxAmount
+        localFilters.value.maxAmount ||
+        localFilters.value.payment
 })
 
 const activeFiltersCount = computed(() => {
@@ -185,11 +200,16 @@ const activeFiltersCount = computed(() => {
     if (localFilters.value.type) count++
     if (localFilters.value.minAmount) count++
     if (localFilters.value.maxAmount) count++
+    if (localFilters.value.payment) count++
     return count
 })
 
 const toggleType = (type) => {
     localFilters.value.type = localFilters.value.type === type ? null : type
+}
+
+const togglePayment = (payment) => {
+    localFilters.value.payment = localFilters.value.payment === payment ? null : payment
 }
 
 const removeCategory = (category) => {
@@ -216,7 +236,8 @@ const clearFilters = () => {
         categories: [],
         type: null,
         minAmount: null,
-        maxAmount: null
+        maxAmount: null,
+        payment: null
     }
     applyFilters()
 }

@@ -6,11 +6,14 @@
         <h1 class="text-3xl font-bold text-gray-800 dark:text-white">
           Quản lý Chi tiêu Cá nhân
         </h1>
-        <ThemeSwitcher />
+        <div>
+          <Button label="Thêm giao dịch" icon="pi pi-plus" @click="showAddExpenseModal = true" class="bg-emerald-600 text-white mr-4" />
+          <ThemeSwitcher />
+        </div>
       </div>
 
-      <!-- Add Expense Form -->
-      <ExpenseForm :categories="categories" @expense-added="addExpense" class="mb-8" />
+      <!-- Stats Section -->
+      <ExpenseStats :expenses="filteredExpenses" class="mb-8" />
 
       <div class="flex flex-col lg:flex-row gap-4 mb-6">
         <ExpenseFilters v-model:filters="filters" :categories="categories" class="flex-1" />
@@ -20,6 +23,9 @@
       <!-- Expenses List -->
       <ExpenseList :expenses="filteredExpenses" @edit-expense="editExpense" @delete-expense="deleteExpense" />
 
+      <!-- Add Expense Modal -->
+      <ExpenseForm :visible="showAddExpenseModal" :categories="categories" @expense-added="handleAddExpenseFromModal"
+        @close="showAddExpenseModal = false" />
       <!-- Edit Dialog -->
       <ExpenseEditModal v-model:visible="showEditDialog" :expense="editingExpense" :categories="categories" @expense-updated="updateExpense" />
     </div>
@@ -34,6 +40,8 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import Dialog from 'primevue/dialog'
+import Button from 'primevue/button'
 import { useToast } from 'primevue/usetoast'
 import Toast from 'primevue/toast'
 import ThemeSwitcher from "./components/ThemeSwitcher.vue";
@@ -42,12 +50,14 @@ import ExpenseFilters from "./components/ExpenseFilters.vue";
 import ExportButton from './components/ExportButton.vue';
 import ExpenseForm from "./components/ExpenseForm.vue";
 import ExpenseEditModal from "./components/ExpenseEditModal.vue";
+import ExpenseStats from './components/ExpenseStats.vue'
 
 const toast = useToast()
 
 const expenses = ref([])
 const showEditDialog = ref(false)
 const editingExpense = ref(null)
+const showAddExpenseModal = ref(false)
 
 const categories = [
   { label: 'Lương', value: 'Salary', icon: 'pi pi-briefcase' },
@@ -68,7 +78,8 @@ const filters = ref({
   categories: [],
   type: null,
   minAmount: null,
-  maxAmount: null
+  maxAmount: null,
+  payment: null
 })
 
 const filteredExpenses = computed(() => {
@@ -82,20 +93,21 @@ const filteredExpenses = computed(() => {
     const matchesType = !filters.value.type || expense.type === filters.value.type;
     const matchesMinAmount = !filters.value.minAmount || expense.amount >= parseFloat(filters.value.minAmount);
     const matchesMaxAmount = !filters.value.maxAmount || expense.amount <= parseFloat(filters.value.maxAmount);
+    const matchesPayment = !filters.value.payment || expense.paymentMethod === filters.value.payment;
 
     return matchesDateFrom && matchesDateTo && matchesCategory &&
-      matchesType && matchesMinAmount && matchesMaxAmount;
+      matchesType && matchesMinAmount && matchesMaxAmount && matchesPayment;
   });
 });
 
 const loadData = () => {
   expenses.value = [
-    { id: 1, date: '2025-01-01', type: 'income', category: 'Salary', description: 'January Salary', amount: 5000000 },
-    { id: 2, date: '2025-01-05', type: 'expense', category: 'Food', description: 'Groceries', amount: 200000 },
-    { id: 3, date: '2025-01-10', type: 'expense', category: 'Transport', description: 'Bus Ticket', amount: 15000 },
-    { id: 4, date: '2025-01-15', type: 'income', category: 'Freelance', description: 'Project A', amount: 3000000 },
-    { id: 5, date: '2025-01-20', type: 'expense', category: 'Utilities', description: 'Electricity Bill', amount: 800000 },
-    { id: 6, date: '2025-01-25', type: 'expense', category: 'Entertainment', description: 'Movie Ticket', amount: 100000 },
+    { id: 1, date: '2025-01-01', type: 'income', category: 'Salary', description: 'January Salary', amount: 5000000, paymentMethod: 'Chuyển khoản' },
+    { id: 2, date: '2025-01-05', type: 'expense', category: 'Food', description: 'Groceries', amount: 200000, paymentMethod: 'Tiền mặt' },
+    { id: 3, date: '2025-01-10', type: 'expense', category: 'Transport', description: 'Bus Ticket', amount: 15000, paymentMethod: 'Tiền mặt' },
+    { id: 4, date: '2025-01-15', type: 'income', category: 'Freelance', description: 'Project A', amount: 3000000, paymentMethod: 'Chuyển khoản' },
+    { id: 5, date: '2025-01-20', type: 'expense', category: 'Utilities', description: 'Electricity Bill', amount: 800000, paymentMethod: 'Chuyển khoản' },
+    { id: 6, date: '2025-01-25', type: 'expense', category: 'Entertainment', description: 'Movie Ticket', amount: 100000, paymentMethod: 'Tiền mặt' },
   ]
 }
 
@@ -112,6 +124,11 @@ const addExpense = (expense) => {
     detail: 'Đã thêm giao dịch mới',
     life: 3000
   })
+}
+
+const handleAddExpenseFromModal = (expense) => {
+  addExpense(expense)
+  showAddExpenseModal.value = false
 }
 
 const editExpense = (expense) => {

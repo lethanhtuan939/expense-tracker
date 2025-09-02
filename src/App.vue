@@ -12,12 +12,13 @@
         </div>
       </div>
 
-      <!-- Stats Section -->
-      <ExpenseStats :expenses="filteredExpenses" class="mb-8" />
-
       <div class="flex flex-col lg:flex-row gap-4 mb-6">
         <ExpenseFilters v-model:filters="filters" :categories="categories" class="flex-1" />
       </div>
+
+      <!-- Stats Section -->
+      <ExpenseStats :expenses="filteredExpenses" class="mb-8" />
+
       <ExportButton :expenses="filteredExpenses" />
 
       <!-- Expenses List -->
@@ -30,6 +31,7 @@
       <ExpenseEditModal v-model:visible="showEditDialog" :expense="editingExpense" :categories="categories" @expense-updated="updateExpense" />
     </div>
 
+    <AppLoading :visible="loadingExpenses" />
     <Toast />
 
     <footer class="mt-8 text-center text-gray-500 dark:text-gray-400 text-sm">
@@ -40,20 +42,22 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import Dialog from 'primevue/dialog'
 import Button from 'primevue/button'
 import { useToast } from 'primevue/usetoast'
 import Toast from 'primevue/toast'
+import AppLoading from './components/AppLoading.vue'
 import ThemeSwitcher from "./components/ThemeSwitcher.vue";
 import ExpenseList from "./components/ExpenseList.vue";
 import ExpenseFilters from "./components/ExpenseFilters.vue";
 import ExportButton from './components/ExportButton.vue';
 import ExpenseForm from "./components/ExpenseForm.vue";
 import ExpenseEditModal from "./components/ExpenseEditModal.vue";
-import ExpenseStats from './components/ExpenseStats.vue'
+import ExpenseStats from './components/ExpenseStats.vue';
+import { GoogleSheetService } from './services/GoogleSheetService';
 
-const toast = useToast()
+const toast = useToast();
 
+const loadingExpenses = ref(false)
 const expenses = ref([])
 const showEditDialog = ref(false)
 const editingExpense = ref(null)
@@ -100,30 +104,46 @@ const filteredExpenses = computed(() => {
   });
 });
 
-const loadData = () => {
-  expenses.value = [
-    { id: 1, date: '2025-01-01', type: 'income', category: 'Salary', description: 'January Salary', amount: 5000000, paymentMethod: 'Chuyển khoản' },
-    { id: 2, date: '2025-01-05', type: 'expense', category: 'Food', description: 'Groceries', amount: 200000, paymentMethod: 'Tiền mặt' },
-    { id: 3, date: '2025-01-10', type: 'expense', category: 'Transport', description: 'Bus Ticket', amount: 15000, paymentMethod: 'Tiền mặt' },
-    { id: 4, date: '2025-01-15', type: 'income', category: 'Freelance', description: 'Project A', amount: 3000000, paymentMethod: 'Chuyển khoản' },
-    { id: 5, date: '2025-01-20', type: 'expense', category: 'Utilities', description: 'Electricity Bill', amount: 800000, paymentMethod: 'Chuyển khoản' },
-    { id: 6, date: '2025-01-25', type: 'expense', category: 'Entertainment', description: 'Movie Ticket', amount: 100000, paymentMethod: 'Tiền mặt' },
-  ]
+// Methods
+const loadData = async () => {
+  loadingExpenses.value = true
+  const googleSheetService = new GoogleSheetService()
+  try {
+    const data = await googleSheetService.readRows()
+    expenses.value = data
+  } catch (e) {
+    expenses.value = []
+  } finally {
+    loadingExpenses.value = false
+  }
 }
 
-// Methods
-const addExpense = (expense) => {
-  expenses.value.unshift({
-    ...expense,
-    id: Date.now()
-  })
-  // saveToLocalStorage()
-  toast.add({
-    severity: 'success',
-    summary: 'Thành công',
-    detail: 'Đã thêm giao dịch mới',
-    life: 3000
-  })
+const addExpense = async (expense) => {
+  loadingExpenses.value = true;
+  const googleSheetService = new GoogleSheetService();
+  const formatted = {
+    no: expenses.value.length + 1,
+    ...expense
+  };
+  try {
+    await googleSheetService.appendRow(formatted);
+    expenses.value.unshift(formatted);
+    toast.add({
+      severity: 'success',
+      summary: 'Thành công',
+      detail: 'Đã thêm giao dịch mới',
+      life: 3000
+    });
+  } catch (error) {
+    toast.add({
+      severity: 'error',
+      summary: 'Lỗi',
+      detail: 'Không thể thêm giao dịch',
+      life: 3000
+    });
+  } finally {
+    loadingExpenses.value = false;
+  }
 }
 
 const handleAddExpenseFromModal = (expense) => {
@@ -136,30 +156,55 @@ const editExpense = (expense) => {
   showEditDialog.value = true
 }
 
-const updateExpense = (updatedExpense) => {
-  const index = expenses.value.findIndex(e => e.id === updatedExpense.id)
-  if (index !== -1) {
-    expenses.value[index] = updatedExpense
-    saveToLocalStorage()
+const updateExpense = async (updatedExpense) => {
+  loadingExpenses.value = true;
+  const googleSheetService = new GoogleSheetService();
+  try {
+    await googleSheetService.updateRow(updatedExpense);
+    console.log('Updated expense:', updatedExpense);
+
     toast.add({
       severity: 'success',
       summary: 'Thành công',
       detail: 'Đã cập nhật giao dịch',
       life: 3000
-    })
+    });
+
+    await loadData();
+  } catch (error) {
+    toast.add({
+      severity: 'error',
+      summary: 'Lỗi',
+      detail: 'Không thể cập nhật giao dịch',
+      life: 3000
+    });
+  } finally {
+    loadingExpenses.value = false;
   }
-  showEditDialog.value = false
 }
 
-const deleteExpense = (id) => {
-  expenses.value = expenses.value.filter(e => e.id !== id)
-  saveToLocalStorage()
-  toast.add({
-    severity: 'success',
-    summary: 'Thành công',
-    detail: 'Đã xóa giao dịch',
-    life: 3000
-  })
+const deleteExpense = async (no) => {
+  loadingExpenses.value = true;
+  const googleSheetService = new GoogleSheetService();
+  try {
+    await googleSheetService.deleteRow({ no });
+    expenses.value = expenses.value.filter(e => e.no !== no);
+    toast.add({
+      severity: 'success',
+      summary: 'Thành công',
+      detail: 'Đã xóa giao dịch',
+      life: 3000
+    });
+  } catch (error) {
+    toast.add({
+      severity: 'error',
+      summary: 'Lỗi',
+      detail: 'Không thể xóa giao dịch',
+      life: 3000
+    });
+  } finally {
+    loadingExpenses.value = false;
+  }
 }
 
 

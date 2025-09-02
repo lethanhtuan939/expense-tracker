@@ -1,5 +1,5 @@
 <template>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
         <!-- Total Income -->
         <Card class="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
             <template #content>
@@ -26,21 +26,6 @@
                         </p>
                     </div>
                     <i class="pi pi-arrow-down text-2xl text-red-600 dark:text-red-400"></i>
-                </div>
-            </template>
-        </Card>
-
-        <!-- Balance -->
-        <Card class="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
-            <template #content>
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-blue-600 dark:text-blue-400 text-sm font-medium">Số dư</p>
-                        <p class="text-2xl font-bold" :class="balanceClass">
-                            {{ formatCurrency(balance) }}
-                        </p>
-                    </div>
-                    <i class="pi pi-wallet text-2xl text-blue-600 dark:text-blue-400"></i>
                 </div>
             </template>
         </Card>

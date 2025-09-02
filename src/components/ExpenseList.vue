@@ -92,7 +92,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, defineProps, defineEmits } from 'vue'
 import { useConfirm } from 'primevue/useconfirm'
 import Card from 'primevue/card'
 import DataTable from 'primevue/datatable'
@@ -103,7 +103,7 @@ import InputText from 'primevue/inputtext'
 import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
 import ConfirmDialog from 'primevue/confirmdialog'
-import { formatDate, formatCurrency } from '@/utils/common.js'
+import { formatDate, formatCurrency } from '../utils/common'
 
 const props = defineProps({
     expenses: {
@@ -129,7 +129,7 @@ const confirmDelete = (expense) => {
         rejectLabel: 'Hủy',
         acceptLabel: 'Xóa',
         accept: () => {
-            emit('delete-expense', expense.id)
+            emit('delete-expense', expense.no)
         }
     })
 }

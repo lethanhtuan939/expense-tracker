@@ -74,7 +74,7 @@ import InputNumber from 'primevue/inputnumber'
 import TextArea from 'primevue/textarea'
 import Button from 'primevue/button'
 
-const emit = defineEmits(['expense-added', 'close'])
+const emit = defineEmits(['expense-added', 'close', 'update:visible'])
 
 const props = defineProps({
     visible: Boolean,
@@ -166,14 +166,12 @@ const submitForm = async () => {
 
     loading.value = true
 
-    console.log('Submitting expense:', form.value)
-
     try {
         const expense = {
             date: form.value.date.toISOString().split('T')[0],
             type: form.value.type,
             category: form.value.category,
-            amount: form.value.amount,
+            amount: form.value.amount ?? 0,
             paymentMethod: form.value.paymentMethod,
             description: form.value.description || ''
         }

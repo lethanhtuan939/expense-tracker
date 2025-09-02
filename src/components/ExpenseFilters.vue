@@ -213,12 +213,12 @@ const togglePayment = (payment) => {
 }
 
 const removeCategory = (category) => {
-    localFilters.value.categories = localFilters.value.categories.filter(c => c !== category)
+    localFilters.value.categories = localFilters.value.categories.filter((c) => c.value !== category.value)
 }
 
 const getCategoryLabel = (value) => {
-    const option = props.categories.find(opt => opt.value === value)
-    return option ? option.label : value
+    const option = (props.categories).find(opt => opt.value === value.value)
+    return option ? option.label : value.label
 }
 
 const formatDate = (date) => {

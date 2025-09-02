@@ -14,7 +14,13 @@
   "dependencies": {
     "@primeuix/themes": "^1.2.3",
     "@primevue/themes": "^4.3.7",
+    "@types/gapi.auth2": "^0.0.61",
+    "@types/gapi.client": "^1.0.8",
+    "axios": "^1.11.0",
     "chart.js": "^4.5.0",
+    "gapi-client": "^0.0.3",
+    "gapi-script": "^1.2.0",
+    "googleapis": "^158.0.0",
     "pinia": "^3.0.3",
     "primeicons": "^7.0.0",
     "primevue": "^4.3.7",

@@ -39,8 +39,17 @@
                 <small v-if="errors.category" class="p-error">{{ errors.category }}</small>
             </div>
 
-            <!-- Amount -->
+            <!-- Payment Method -->
             <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Hình thức thanh toán <span class="text-red-500">*</span></label>
+                <Dropdown v-model="form.paymentMethod"
+                    :options="[{ label: 'Chuyển khoản', value: 'Chuyển khoản' }, { label: 'Tiền mặt', value: 'Tiền mặt' }]" optionLabel="label"
+                    optionValue="value" placeholder="Chọn hình thức" class="w-full" />
+                <small v-if="errors.paymentMethod" class="p-error">{{ errors.paymentMethod }}</small>
+            </div>
+
+            <!-- Amount -->
+            <div class="flex flex-col gap-2 md:col-span-2">
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Số tiền <span class="text-red-500">*</span></label>
                 <InputNumber v-model="form.amount" mode="currency" currency="VND" locale="vi-VN" placeholder="0 ₫"
                     :class="{ 'p-invalid': errors.amount }" class="w-full" />
@@ -64,7 +73,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, defineProps } from 'vue'
 import Dialog from 'primevue/dialog'
 import Calendar from 'primevue/calendar'
 import Dropdown from 'primevue/dropdown'
@@ -73,18 +82,9 @@ import TextArea from 'primevue/textarea'
 import Button from 'primevue/button'
 
 const props = defineProps({
-    visible: {
-        type: Boolean,
-        default: false
-    },
-    expense: {
-        type: Object,
-        default: null
-    },
-    categories: {
-        type: Array,
-        default: () => []
-    }
+    visible: Boolean,
+    expense: Object,
+    categories: Array
 })
 
 const localVisible = ref(props.visible)
@@ -100,11 +100,12 @@ watch(localVisible, (val) => {
 const emit = defineEmits(['update:visible', 'expense-updated'])
 
 const form = ref({
-    id: null,
+    no: 0,
     date: new Date(),
     type: '',
     category: '',
-    amount: null,
+    paymentMethod: '',
+    amount: 0,
     description: ''
 })
 
@@ -116,14 +117,14 @@ const typeOptions = [
     { label: 'Chi tiêu', value: 'expense' }
 ]
 
-// <CHANGE> Watch for expense prop changes to populate form
 watch(() => props.expense, (newExpense) => {
     if (newExpense) {
         form.value = {
-            id: newExpense.id,
+            no: newExpense.no,
             date: new Date(newExpense.date),
             type: newExpense.type,
             category: newExpense.category,
+            paymentMethod: newExpense.paymentMethod || '',
             amount: newExpense.amount,
             description: newExpense.description || ''
         }
@@ -155,6 +156,10 @@ const validateForm = () => {
         errors.value.category = 'Vui lòng chọn danh mục'
     }
 
+    if (!form.value.paymentMethod) {
+        errors.value.paymentMethod = 'Vui lòng chọn hình thức thanh toán'
+    }
+
     if (!form.value.amount || form.value.amount <= 0) {
         errors.value.amount = 'Vui lòng nhập số tiền hợp lệ'
     }
@@ -168,11 +173,17 @@ const submitForm = async () => {
     loading.value = true
 
     try {
+        // Format date as YYYY-MM-DD in local timezone
+        const pad = n => n < 10 ? '0' + n : n;
+        const dateObj = form.value.date;
+        const dateStr = `${dateObj.getFullYear()}-${pad(dateObj.getMonth() + 1)}-${pad(dateObj.getDate())}`;
+
         const updatedExpense = {
-            id: form.value.id,
-            date: form.value.date.toISOString().split('T')[0],
+            no: form.value.no,
+            date: dateStr,
             type: form.value.type,
             category: form.value.category,
+            paymentMethod: form.value.paymentMethod,
             amount: form.value.amount,
             description: form.value.description || ''
         }
@@ -190,11 +201,12 @@ const closeModal = () => {
 
 const resetForm = () => {
     form.value = {
-        id: null,
+        no: 0,
         date: new Date(),
         type: '',
         category: '',
-        amount: null,
+        paymentMethod: '',
+        amount: 0,
         description: ''
     }
     errors.value = {}
